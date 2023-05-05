@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Chat App</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link rel="stylesheet" type="text/css" href="static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/lib/languages/python.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/a11y-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+</head>
+
+<body>
+  <div class="container mt-5">
+    <h1 style="color:white">4O4-Found@PayU</h1>
+    <div class="chat-box mt-3">
+      <!-- Chat messages will be added here dynamically -->
+    </div>
+    <div class="form-group mt-3">
+      <textarea class="form-control" rows="3" placeholder="Type your message here" id="message-input"></textarea>
+    </div>
+    <button type="button" class="btn btn-primary" id="send-btn">Send</button>
+    <button type="button" class="btn btn-primary" id="clear-btn">Clear</button>
+
+  </div>
+  <script>
+    setInterval(highlightAll, 1000);
+    // Function to highlight code using highlight.js library
+    function highlightAll() {
+      document.querySelectorAll("pre code").forEach(block => {
+        hljs.highlightBlock(block);
+      });
+    }
+
+    const chatBox = document.querySelector(".chat-box");
+    const messageInput = document.querySelector("#message-input");
+    const sendBtn = document.querySelector("#send-btn");
+    const clearBtn = document.querySelector("#clear-btn");
+
+
+    function addMessage(message, isUserMessage) {
+      const messageDiv = document.createElement("div");
+      messageDiv.classList.add("mt-3", "p-3", "rounded");
+
+      if (isUserMessage) {
+        messageDiv.classList.add("user-message");
+
+      } else {
+        messageDiv.classList.add("bot-message");
+      }
+
+      messageDiv.innerHTML = `
+        <img src="static/images/user.png" class="user-icon"><p>${message}</p>
+        `;
+
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+
+
+
+    function sendMessage() {
+      const query = messageInput.value.trim();
+      console.log("Called")      
+      messageInput.value = "";
+      if (query !== "") {
+        addMessage(query, true);
+        addLoader();
+        fetch("http://localhost:8080/makeController", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ query })
+        })
+          .then(response => response.json())
+          .then(data => {
+            deleteLoader();
+            console.log("Data received", data);
+            if (data.status == "1") {
+              createTable(data);
+            } else {
+              appendError();
+            }
+          })
+          .catch(error => console.error(error));
+      }
+    }
+
+
+    function createTable(data) {
+      var table = document.createElement('table');
+      var cols = Object.keys(data.result[0]);
+      let thead = document.createElement("thead");
+      let tr = document.createElement("tr");
+      cols.forEach((col) => {
+        let th = document.createElement("th");
+        th.innerText = col; // Set the column name as the text of the header cell
+        tr.appendChild(th); // Append the header cell to the header row
+      });
+      thead.appendChild(tr); // Append the header row to the header
+      table.append(tr);
+      data.result.forEach((item) => {
+        let tr = document.createElement("tr");
+
+        // Get the values of the current object in the JSON data
+        let vals = Object.values(item);
+
+        // Loop through the values and create table cells
+        vals.forEach((elem) => {
+          let td = document.createElement("td");
+          td.innerText = elem; // Set the value as the text of the table cell
+          tr.appendChild(td); // Append the table cell to the table row
+        });
+        table.appendChild(tr); // Append the table row to the table
+      });
+
+      messageInput.value = "";
+      const messageDiv = document.createElement("div");
+      messageDiv.classList.add("mt-3", "p-3", "rounded");
+      messageDiv.classList.add("bot-message");
+
+      const content = table;
+
+      messageDiv.innerHTML = `<img src="static/images/gpt.jpg" class="bot-icon"><p>Here is a result of your query in a structured format</p><table class = "table table-dark">${content.innerHTML}</table>`
+
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function appendError() {
+      const messageDiv = document.createElement("div");
+      messageDiv.classList.add("mt-3", "p-3", "rounded");
+      messageDiv.classList.add("bot-message");
+      messageDiv.innerHTML = `<img src="static/images/gpt.jpg" class="bot-icon"><p>Oops! Some error occurred while processing your query. Please try again</p>`
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function addLoader(){
+      const loaderDiv = document.createElement("div");
+      loaderDiv.classList.add("mt-3", "p-3", "rounded");
+      loaderDiv.classList.add("loader-div");
+      loaderDiv.innerHTML = `<img src="static/images/gpt.jpg" class="bot-icon"><img src="static/images/spinner.gif" class="loader-gif">`
+      chatBox.appendChild(loaderDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function deleteLoader(){
+      const loaders = document.querySelectorAll('.loader-div');
+      loaders.forEach(loader => {
+        loader.remove();
+      });
+    }
+
+    function clearScreen(){
+      const user_messages = document.querySelectorAll('.user-message');
+      const bot_messages = document.querySelectorAll('.bot-message');
+      user_messages.forEach(user_message => {
+        user_message.remove();
+      });
+
+      bot_messages.forEach(bot_message => {
+        bot_message.remove();
+      });
+    }
+
+
+    sendBtn.addEventListener("click", sendMessage);
+    clearBtn.addEventListener("click", clearScreen);
+    messageInput.addEventListener("keydown", event => {
+      if (event.keyCode === 13 && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+
+</html>
