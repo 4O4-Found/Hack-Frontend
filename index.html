@@ -64,9 +64,6 @@
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-
-
-
     function sendMessage() {
       const query = messageInput.value.trim();
       console.log("Called")      
@@ -86,7 +83,16 @@
             deleteLoader();
             console.log("Data received", data);
             if (data.status == "1") {
-              createTable(data);
+              console.log("length of data is",data.result.length);
+              if(data.result.length == 0){
+                const messageDiv = document.createElement("div");
+                messageDiv.classList.add("mt-3", "p-3", "rounded");
+                messageDiv.classList.add("bot-message");
+                messageDiv.innerHTML = `<img src="static/images/gpt.jpg" class="bot-icon"><p>Oops ! Your query did not return any result</p>`;
+                chatBox.appendChild(messageDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+              }
+              else createTable(data);
             } else {
               appendError();
             }
