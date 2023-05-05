@@ -19,7 +19,7 @@
 
 <body>
   <div class="container mt-5">
-    <h1 style="color:white">4O4-Found@PayU</h1>
+    <h1 style="color:white">HeyAI</h1>
     <div class="chat-box mt-3">
       <!-- Chat messages will be added here dynamically -->
     </div>
@@ -71,7 +71,7 @@
       if (query !== "") {
         addMessage(query, true);
         addLoader();
-        fetch("http://localhost:8080/makeController", {
+        fetch("http://localhost:8081/makeController", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -114,7 +114,7 @@
       });
       thead.appendChild(tr); // Append the header row to the header
       table.append(tr);
-      data.result.forEach((item) => {
+      data.result.forEach((item, i) => {
         let tr = document.createElement("tr");
 
         // Get the values of the current object in the JSON data
@@ -126,6 +126,7 @@
           td.innerText = elem; // Set the value as the text of the table cell
           tr.appendChild(td); // Append the table cell to the table row
         });
+
         table.appendChild(tr); // Append the table row to the table
       });
 
@@ -136,7 +137,7 @@
 
       const content = table;
 
-      messageDiv.innerHTML = `<img src="static/images/gpt.jpg" class="bot-icon"><p>Here is a result of your query in a structured format</p><table class = "table table-dark">${content.innerHTML}</table>`
+      messageDiv.innerHTML = `<img src="static/images/gpt.jpg" class="bot-icon"><p>Here is a result of your query : ${data['query']}</p><table class = "table table-dark">${content.innerHTML}</table>`
 
       chatBox.appendChild(messageDiv);
       chatBox.scrollTop = chatBox.scrollHeight;
